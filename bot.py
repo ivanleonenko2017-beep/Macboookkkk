@@ -1,8 +1,27 @@
+import os
 import time
+import threading
 import requests
 from bs4 import BeautifulSoup
+from http.server import HTTPServer, BaseHTTPRequestHandler
 
-BOT_TOKEN = "8944186419:AAEOmSyTF49UJrbDOeOjMpHWeo-fFS53quU"
+# --- ВЕБ-СЕРВЕР ДЛЯ РЕНДЕРА (чтобы не было ошибки по портам) ---
+class HealthCheckHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.end_headers()
+        self.wfile.write(b"OK")
+
+def run_health_check_server():
+    port = int(os.environ.get("PORT", 8080))
+    server = HTTPServer(('0.0.0.0', port), HealthCheckHandler)
+    server.serve_forever()
+
+# Запуск веб-сервера в отдельном потоке
+threading.Thread(target=run_health_check_server, daemon=True).start()
+
+# --- ОСНОВНЫЕ НАСТРОЙКИ ---
+BOT_TOKEN = "8944186419:AAEOmSyTF49UJrbDOeOjMpHWe"
 CHAT_ID = "668277478"
 
 SEARCH_URL = "https://www.olx.ua/d/uk/elektronika/noutbuki-i-accessories/noutbuki/q-macbook-air-m1/?search%5Bfilter_float_price%3Afrom%5D=13000&search%5Bfilter_float_price%3Ato%5D=16000&search%5Bstate%5D=used"
