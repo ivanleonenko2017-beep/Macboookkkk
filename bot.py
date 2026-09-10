@@ -3,24 +3,23 @@ import time
 import threading
 import requests
 from bs4 import BeautifulSoup
-from http.server import HTTPServer, BaseHTTPRequestHandler
+from flask import Flask
 
-# --- ВЕБ-СЕРВЕР ДЛЯ РЕНДЕРА (чтобы не было ошибки по портам) ---
-class HealthCheckHandler(BaseHTTPRequestHandler):
-    def do_GET(self):
-        self.send_response(200)
-        self.end_headers()
-        self.wfile.write(b"OK")
+# --- ВЕБ-СЕРВЕР FLASK ДЛЯ RENDER ---
+app = Flask(__name__)
 
-def run_health_check_server():
+@app.route('/')
+def health_check():
+    return "OK", 200
+
+def run_web_server():
     port = int(os.environ.get("PORT", 8080))
-    server = HTTPServer(('0.0.0.0', port), HealthCheckHandler)
-    server.serve_forever()
+    app.run(host="0.0.0.0", port=port)
 
-# Запуск веб-сервера в отдельном потоке
-threading.Thread(target=run_health_check_server, daemon=True).start()
+# Запуск веб-сервера в отдельном фоновом потоке
+threading.Thread(target=run_web_server, daemon=True).start()
 
-# --- ОСНОВНЫЕ НАСТРОЙКИ ---
+# --- НАСТРОЙКИ БОТА И ПАРСЕРА ---
 BOT_TOKEN = "8944186419:AAEOmSyTF49UJrbDOeOjMpHWe"
 CHAT_ID = "668277478"
 
@@ -77,8 +76,10 @@ def parse_olx():
     except Exception as e:
         print(f"Ошибка: {e}")
 
-if __name__ == "__main__":
-    send_telegram_message("✅ Бот мониторинга OLX успешно запущен 24/7!")
-    while True:
-        parse_olx()
-        time.sleep(45)
+# --- ЗАПУСК МОНИТОРИНГА ---
+time.sleep(3)
+send_telegram_message("✅ Бот мониторинга OLX успешно запущен 24/7!")
+
+while True:
+    parse_olx()
+    time.sleep(45)
